@@ -44,14 +44,14 @@ public class PortafolioService {
             throw new IllegalArgumentException("El monto de inyección debe ser mayor a cero.");
         }
 
-        // 2. Buscamos el portafolio actual
+        // Buscamos el portafolio actual
         Portafolio portafolio = obtenerPortafolio(usuarioId);
 
-        // 3. Sumamos el nuevo capital al balance existente de forma segura
+        // Sumamos el nuevo capital al balance existente de forma segura
         BigDecimal nuevoBalance = portafolio.getBalanceMxn().add(monto);
         portafolio.setBalanceMxn(nuevoBalance);
 
-        // 4. Guardamos los cambios en BD
+        // Guardamos los cambios en BD
         return portafolioRepository.save(portafolio);
     }
     /**
@@ -59,31 +59,31 @@ public class PortafolioService {
      */
     @Transactional
     public Portafolio comprarUsdc(Long usuarioId, BigDecimal montoMxn, BigDecimal tipoCambio) {
-        // 1. Validaciones básicas
+        // Validaciones básicas
         if (montoMxn.compareTo(BigDecimal.ZERO) <= 0 || tipoCambio.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El monto y el tipo de cambio deben ser mayores a cero.");
         }
 
-        // 2. Obtener el portafolio
+        // Obtener el portafolio
         Portafolio portafolio = obtenerPortafolio(usuarioId);
 
-        // 3. Validar que tenga suficientes fondos en pesos
+        // Validar que tenga suficientes fondos en pesos
         if (portafolio.getBalanceMxn().compareTo(montoMxn) < 0) {
-            throw new IllegalStateException("Saldo insuficiente en MXN para realizar la compra.");
+            throw new IllegalStateException("Saldo insuficiente para realizar la compra.");
         }
 
-        // 4. Descontar los pesos (MXN)
+        // Descontar los pesos (MXN)
         BigDecimal nuevoBalanceMxn = portafolio.getBalanceMxn().subtract(montoMxn);
         portafolio.setBalanceMxn(nuevoBalanceMxn);
 
-        // 5. Calcular cuántos USDC se compran (montoMxn / tipoCambio)
+        // Calcular cuántos USDC se compran (montoMxn / tipoCambio)
         BigDecimal usdcComprados = montoMxn.divide(tipoCambio, 4, RoundingMode.HALF_UP);
 
-        // 6. Sumar los USDC al balance
+        // Sumar los USDC al balance
         BigDecimal nuevoBalanceUsdc = portafolio.getBalanceUsdc().add(usdcComprados);
         portafolio.setBalanceUsdc(nuevoBalanceUsdc);
 
-        // 7. Guardar en la BD
+        // Guardar en la BD
         return portafolioRepository.save(portafolio);
     }
 

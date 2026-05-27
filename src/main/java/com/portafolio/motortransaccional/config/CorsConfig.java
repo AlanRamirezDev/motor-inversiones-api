@@ -13,9 +13,9 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                // Permite peticiones a todos los endpoints de tu API
+                // Permite peticiones a todos los endpoints de la API
                 registry.addMapping("/api/v1/**")
-                        // Aquí indicamos la dirección exacta de tu frontend en desarrollo
+                        // Aquí se indica la dirección exacta del frontend
                         .allowedOrigins("http://localhost:4321")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
