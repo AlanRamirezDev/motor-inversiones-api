@@ -69,4 +69,14 @@ public class PortafolioController {
                 portafolio.getBalanceUsdc()
         );
     }
+
+    /**
+     * Endpoint para reiniciar los balances del portafolio a cero.
+     * Ejemplo de uso: POST http://localhost:8080/api/v1/portafolios/1/reiniciar
+     */
+    @PostMapping("/{usuarioId}/reiniciar")
+    public ResponseEntity<PortafolioResponse> reiniciarPortafolio(@PathVariable Long usuarioId) {
+        Portafolio portafolioActualizado = portafolioService.reiniciarPortafolio(usuarioId);
+        return new ResponseEntity<>(mapearAResponse(portafolioActualizado), HttpStatus.OK);
+    }
 }

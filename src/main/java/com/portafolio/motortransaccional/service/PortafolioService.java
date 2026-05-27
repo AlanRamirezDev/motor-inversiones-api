@@ -86,4 +86,12 @@ public class PortafolioService {
         // 7. Guardar en la BD
         return portafolioRepository.save(portafolio);
     }
+
+    @Transactional
+    public Portafolio reiniciarPortafolio(Long usuarioId) {
+        Portafolio portafolio = obtenerPortafolio(usuarioId);
+        portafolio.setBalanceMxn(BigDecimal.ZERO);
+        portafolio.setBalanceUsdc(BigDecimal.ZERO);
+        return portafolioRepository.save(portafolio);
+    }
 }
