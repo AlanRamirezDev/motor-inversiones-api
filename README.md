@@ -1,23 +1,27 @@
-# Motor Inversiones API 🚀
+# Motor Transaccional de Inversiones - API
 
-API RESTful desarrollada para gestionar operaciones financieras esenciales de un portafolio de inversiones. Construida con un enfoque en arquitectura limpia y precisión financiera.
+API RESTful de alto rendimiento construida con **Spring Boot 3** y **Java 21** para simular procesos críticos de plataformas Fintech, tales como inyecciones de capital y conversión defensiva de activos (MXN a USDC). Este componente actúa como el núcleo de procesamiento transaccional para el ecosistema del portafolio.
+
+## 🚀 Características Técnicas & Arquitectura
+
+- **Manejo de Concurrencia:** Implementación de bloqueo pesimista (`PESSIMISTIC_WRITE`) a nivel de base de datos para garantizar la consistencia absoluta en el balance del portafolio durante operaciones simultáneas.
+- **Transaccionalidad:** Configuración avanzada de aislamiento de transacciones (`Isolation.REPEATABLE_READ`) para mitigar lecturas no repetibles durante fluctuaciones simuladas del tipo de cambio.
+- **Persistencia de Datos en la Nube:** Conexión integrada con PostgreSQL Serverless (Neon DB) para el entorno de producción, manteniendo aislamiento completo mediante variables de entorno.
+- **Arquitectura de Desarrollo Aislada:** Soporte local mediante contenedores **Docker** reconfigurados al puerto `5433` para evitar colisiones con instancias nativas del sistema operativo.
+- **Ecosistema Integrado:** Configuración de políticas CORS dinámicas para permitir la comunicación segura y exclusiva con el cliente SPA desplegado en Vercel.
 
 ## 🛠️ Stack Tecnológico
-* **Lenguaje:** Java 21
-* **Framework:** Spring Boot 3
-* **Base de Datos:** PostgreSQL
-* **Infraestructura:** Docker (para contenedores de base de datos local)
-* **Gestor de dependencias:** Maven
 
-## ⚙️ Características Principales
-* **Precisión Financiera:** Uso estricto de `BigDecimal` y `RoundingMode` para evitar pérdida de decimales en transacciones y conversiones.
-* **Transaccionalidad:** Integración de `@Transactional` para asegurar las propiedades ACID de la base de datos (si algo falla, se hace rollback).
-* **Arquitectura por Capas:** Separación clara entre Controladores, Servicios, Repositorios y DTOs (Data Transfer Objects mediante Java Records).
+- **Lenguaje:** Java 21
+- **Framework:** Spring Boot 3.x
+- **Persistencia:** Spring Data JPA / Hibernate 6
+- **Base de Datos:** PostgreSQL 16 (Neon DB en la nube / Docker en local)
+- **Contenedores:** Docker & Docker Compose
 
-## 🚀 Endpoints Principales
-La API se expone bajo la ruta base `/api/v1/portafolios`:
+## 🌐 Endpoints Principales
 
-* `POST /inicializar/{usuarioId}`: Crea un nuevo portafolio en ceros.
-* `GET /{usuarioId}`: Consulta el balance actual en MXN y USDC.
-* `POST /{usuarioId}/inyeccion`: Recibe depósitos de capital en pesos (MXN).
-* `POST /{usuarioId}/comprar-usdc`: Convierte MXN a USDC basándose en el tipo de cambio proporcionado.
+- `GET /api/v1/portafolios/1` - Obtiene el balance actual optimizado en MXN y USDC.
+- `POST /api/v1/portafolios/inicializar/1` - Inicializa las cuentas de demostración de manera automática ante la ausencia de registros.
+- `POST /api/v1/portafolios/1/inyeccion` - Registra flujos de fondeo de capital entrante.
+- `POST /api/v1/portafolios/1/comprar-usdc` - Ejecuta el flujo transaccional con bloqueo para el intercambio seguro de divisas.
+- `POST /api/v1/portafolios/1/reiniciar` - Restablece los balances de la base de datos a cero.
