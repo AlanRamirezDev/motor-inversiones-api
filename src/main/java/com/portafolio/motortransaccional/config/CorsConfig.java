@@ -13,10 +13,15 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
+                // Leem la variable de entorno, si no existe usa el dominio de Vercel por defecto
+                String frontendUrl = System.getenv("FRONTEND_URL");
+                if (frontendUrl == null || frontendUrl.isEmpty()) {
+                    frontendUrl = "https://portafolio-dev-xi.vercel.app";
+                }
+
                 // Permite peticiones a todos los endpoints de la API
                 registry.addMapping("/api/v1/**")
-                        // Aquí se indica la dirección exacta del frontend
-                        .allowedOrigins("http://localhost:4321")
+                        .allowedOrigins("http://localhost:4321", frontendUrl)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
