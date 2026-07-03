@@ -5,6 +5,7 @@ import com.portafolio.motortransaccional.dto.PortafolioResponse;
 import com.portafolio.motortransaccional.model.Portafolio;
 import com.portafolio.motortransaccional.service.PortafolioService;
 import com.portafolio.motortransaccional.dto.CompraUsdcRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,39 +18,45 @@ public class PortafolioController {
 
     private final PortafolioService portafolioService;
 
+    /**
+     * Inicializa un portafolio para un usuario específico.
+     */
     @PostMapping("/inicializar/{usuarioId}")
     public ResponseEntity<PortafolioResponse> inicializar(@PathVariable Long usuarioId) {
         Portafolio portafolio = portafolioService.inicializarPortafolio(usuarioId);
-        return new ResponseEntity<>(mapearAResponse(portafolio), HttpStatus.CREATED);
+        return new ResponseEntity<>(PortafolioResponse.from(portafolio), HttpStatus.CREATED);
     }
 
+    /**
+     * Obtiene los balances actuales del portafolio del usuario.
+     */
     @GetMapping("/{usuarioId}")
     public ResponseEntity<PortafolioResponse> obtener(@PathVariable Long usuarioId) {
         Portafolio portafolio = portafolioService.obtenerPortafolio(usuarioId);
-        return new ResponseEntity<>(mapearAResponse(portafolio), HttpStatus.OK);
+        return new ResponseEntity<>(PortafolioResponse.from(portafolio), HttpStatus.OK);
     }
 
     /**
-     * Endpoint para inyectar capital.
-     * Ejemplo de uso: POST http://localhost:8080/api/v1/portafolios/1/inyeccion
+     * Modifica el balance sumando capital de fondos.
+     * PUT para la actualización de un recurso existente.
      */
-    @PostMapping("/{usuarioId}/inyeccion")
+    @PutMapping("/{usuarioId}/inyeccion")
     public ResponseEntity<PortafolioResponse> inyectarCapital(
             @PathVariable Long usuarioId,
-            @RequestBody InyeccionRequest request) {
+            @Valid @RequestBody InyeccionRequest request) {
 
         Portafolio portafolioActualizado = portafolioService.inyectarCapital(usuarioId, request.monto());
-        return new ResponseEntity<>(mapearAResponse(portafolioActualizado), HttpStatus.OK);
+        return new ResponseEntity<>(PortafolioResponse.from(portafolioActualizado), HttpStatus.OK);
     }
 
     /**
-     * Endpoint para comprar USDC usando el balance en MXN.
-     * Ejemplo de uso: POST http://localhost:8080/api/v1/portafolios/1/comprar-usdc
+     * Modifica los balances ejecutando el intercambio de MXN a USDC.
+     * PUT para mutación de recursos financieros.
      */
-    @PostMapping("/{usuarioId}/comprar-usdc")
+    @PutMapping("/{usuarioId}/comprar-usdc")
     public ResponseEntity<PortafolioResponse> comprarUsdc(
             @PathVariable Long usuarioId,
-            @RequestBody CompraUsdcRequest request) {
+            @Valid @RequestBody CompraUsdcRequest request) {
 
         Portafolio portafolioActualizado = portafolioService.comprarUsdc(
                 usuarioId,
@@ -57,26 +64,16 @@ public class PortafolioController {
                 request.tipoCambio()
         );
 
-        return new ResponseEntity<>(mapearAResponse(portafolioActualizado), HttpStatus.OK);
-    }
-
-    // Método auxiliar (Mapper) para convertir la Entidad en un DTO limpio
-    private PortafolioResponse mapearAResponse(Portafolio portafolio) {
-        return new PortafolioResponse(
-                portafolio.getId(),
-                portafolio.getUsuarioId(),
-                portafolio.getBalanceMxn(),
-                portafolio.getBalanceUsdc()
-        );
+        return new ResponseEntity<>(PortafolioResponse.from(portafolioActualizado), HttpStatus.OK);
     }
 
     /**
-     * Endpoint para reiniciar los balances del portafolio a cero.
-     * Ejemplo de uso: POST http://localhost:8080/api/v1/portafolios/1/reiniciar
+     * Restablece los balances del portafolio a valores iniciales (Cero).
+     * PUT para asegurar comportamiento idempotente en reinicios de estado.
      */
-    @PostMapping("/{usuarioId}/reiniciar")
+    @PutMapping("/{usuarioId}/reiniciar")
     public ResponseEntity<PortafolioResponse> reiniciarPortafolio(@PathVariable Long usuarioId) {
         Portafolio portafolioActualizado = portafolioService.reiniciarPortafolio(usuarioId);
-        return new ResponseEntity<>(mapearAResponse(portafolioActualizado), HttpStatus.OK);
+        return new ResponseEntity<>(PortafolioResponse.from(portafolioActualizado), HttpStatus.OK);
     }
 }

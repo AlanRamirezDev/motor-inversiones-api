@@ -1,8 +1,11 @@
 package com.portafolio.motortransaccional.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
-// Este record define la estructura del JSON que el usuario enviará para depositar
 public record InyeccionRequest(
+        @NotNull(message = "El monto es obligatorio")
+        @Positive(message = "El monto de inyección debe ser mayor a cero")
         BigDecimal monto
 ) {}
