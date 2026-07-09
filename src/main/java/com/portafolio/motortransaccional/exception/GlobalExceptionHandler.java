@@ -1,5 +1,6 @@
 package com.portafolio.motortransaccional.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -25,16 +26,30 @@ public class GlobalExceptionHandler {
 
     /**
      * Intercepta los fallos de validación
+     * @param request
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+
         Map<String, String> errorResponse = new HashMap<>();
 
         /**
-         * Obtiene el primer error de validación disponible en el BindingResult
+         * Capturar idioma
+         */
+        boolean isEn = "en".equals(request.getHeader("Accept-Language"));
+
+        /**
+         * Obtiene el primer error de validación disponible en el BindingResult.
          */
         FieldError fieldError = ex.getBindingResult().getFieldError();
-        String mensajeDefault = fieldError != null ? fieldError.getDefaultMessage() : "Error de validación en los datos de entrada";
+
+        String fallbackMsg = isEn
+                ? "Validation error in input data"
+                : "Error de validación en los datos de entrada";
+
+        String mensajeDefault = fieldError != null ? fieldError.getDefaultMessage() : fallbackMsg;
 
         errorResponse.put("error", mensajeDefault);
 

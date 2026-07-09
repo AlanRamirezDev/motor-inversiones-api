@@ -3,6 +3,7 @@ package com.portafolio.motortransaccional.service;
 import com.portafolio.motortransaccional.model.Portafolio;
 import com.portafolio.motortransaccional.repository.PortafolioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +31,13 @@ public class PortafolioService {
      */
     @Transactional(readOnly = true)
     public Portafolio obtenerPortafolio(Long usuarioId) {
+        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
+
         return portafolioRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró un portafolio para el usuario: " + usuarioId));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        isEn ? "No portfolio found for user: " + usuarioId
+                                : "No se encontró un portafolio para el usuario: " + usuarioId
+                ));
     }
 
     /**
@@ -39,15 +45,23 @@ public class PortafolioService {
      */
     @Transactional
     public Portafolio inyectarCapital(Long usuarioId, BigDecimal monto) {
+        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
+
         if (monto.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("El monto de inyección debe ser mayor a cero.");
+            throw new IllegalArgumentException(
+                    isEn ? "The injection amount must be greater than zero."
+                            : "El monto de inyección debe ser mayor a cero."
+            );
         }
 
         /**
          * Congela la fila durante la escritura
          */
         Portafolio portafolio = portafolioRepository.findByUsuarioIdForUpdate(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró un portafolio activo para el usuario: " + usuarioId));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        isEn ? "No active portfolio found for user: " + usuarioId
+                                : "No se encontró un portafolio activo para el usuario: " + usuarioId
+                ));
 
         BigDecimal nuevoBalance = portafolio.getBalanceMxn().add(monto);
         portafolio.setBalanceMxn(nuevoBalance);
@@ -60,15 +74,26 @@ public class PortafolioService {
      */
     @Transactional
     public Portafolio comprarUsdc(Long usuarioId, BigDecimal montoMxn, BigDecimal tipoCambio) {
+        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
+
         if (montoMxn.compareTo(BigDecimal.ZERO) <= 0 || tipoCambio.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("El monto y el tipo de cambio deben ser mayores a cero.");
+            throw new IllegalArgumentException(
+                    isEn ? "The amount and exchange rate must be greater than zero."
+                            : "El monto y el tipo de cambio deben ser mayores a cero."
+            );
         }
 
         Portafolio portafolio = portafolioRepository.findByUsuarioIdForUpdate(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró un portafolio activo para el usuario: " + usuarioId));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        isEn ? "No active portfolio found for user: " + usuarioId
+                                : "No se encontró un portafolio activo para el usuario: " + usuarioId
+                ));
 
         if (portafolio.getBalanceMxn().compareTo(montoMxn) < 0) {
-            throw new IllegalStateException("Saldo insuficiente para realizar la compra.");
+            throw new IllegalStateException(
+                    isEn ? "Insufficient balance to perform the purchase."
+                            : "Saldo insuficiente para realizar la compra."
+            );
         }
 
         BigDecimal nuevoBalanceMxn = portafolio.getBalanceMxn().subtract(montoMxn);
@@ -86,8 +111,13 @@ public class PortafolioService {
      */
     @Transactional
     public Portafolio reiniciarPortafolio(Long usuarioId) {
+        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
+
         Portafolio portafolio = portafolioRepository.findByUsuarioIdForUpdate(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró un portafolio activo para el usuario: " + usuarioId));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        isEn ? "No active portfolio found for user: " + usuarioId
+                                : "No se encontró un portafolio activo para el usuario: " + usuarioId
+                ));
 
         portafolio.setBalanceMxn(BigDecimal.ZERO);
         portafolio.setBalanceUsdc(BigDecimal.ZERO);
