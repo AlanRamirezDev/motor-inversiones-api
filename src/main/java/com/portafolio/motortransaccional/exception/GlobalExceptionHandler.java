@@ -1,14 +1,12 @@
 package com.portafolio.motortransaccional.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.HttpStatus;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
@@ -19,30 +17,18 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<Map<String, String>> handleBusinessExceptions(RuntimeException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
     }
 
     /**
-     * Intercepta los fallos de validación
-     * @param request
+     * Intercepta los fallos de validación de los DTOs.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
 
-        Map<String, String> errorResponse = new HashMap<>();
 
-        /**
-         * Capturar idioma
-         */
-        boolean isEn = "en".equals(request.getHeader("Accept-Language"));
+        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
 
-        /**
-         * Obtiene el primer error de validación disponible en el BindingResult.
-         */
         FieldError fieldError = ex.getBindingResult().getFieldError();
 
         String fallbackMsg = isEn
@@ -51,8 +37,6 @@ public class GlobalExceptionHandler {
 
         String mensajeDefault = fieldError != null ? fieldError.getDefaultMessage() : fallbackMsg;
 
-        errorResponse.put("error", mensajeDefault);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(Map.of("error", mensajeDefault));
     }
 }
