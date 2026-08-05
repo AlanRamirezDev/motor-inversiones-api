@@ -24,7 +24,7 @@ public class PortafolioController {
     @PostMapping("/inicializar/{usuarioId}")
     public ResponseEntity<PortafolioResponse> inicializar(@PathVariable Long usuarioId) {
         Portafolio portafolio = portafolioService.inicializarPortafolio(usuarioId);
-        return new ResponseEntity<>(PortafolioResponse.from(portafolio), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(PortafolioResponse.from(portafolio));
     }
 
     /**
@@ -33,7 +33,7 @@ public class PortafolioController {
     @GetMapping("/{usuarioId}")
     public ResponseEntity<PortafolioResponse> obtener(@PathVariable Long usuarioId) {
         Portafolio portafolio = portafolioService.obtenerPortafolio(usuarioId);
-        return new ResponseEntity<>(PortafolioResponse.from(portafolio), HttpStatus.OK);
+        return ResponseEntity.ok(PortafolioResponse.from(portafolio));
     }
 
     /**
@@ -46,7 +46,7 @@ public class PortafolioController {
             @Valid @RequestBody InyeccionRequest request) {
 
         Portafolio portafolioActualizado = portafolioService.inyectarCapital(usuarioId, request.monto());
-        return new ResponseEntity<>(PortafolioResponse.from(portafolioActualizado), HttpStatus.OK);
+        return ResponseEntity.ok(PortafolioResponse.from(portafolioActualizado));
     }
 
     /**
@@ -63,8 +63,7 @@ public class PortafolioController {
                 request.montoMxn(),
                 request.tipoCambio()
         );
-
-        return new ResponseEntity<>(PortafolioResponse.from(portafolioActualizado), HttpStatus.OK);
+        return ResponseEntity.ok(PortafolioResponse.from(portafolioActualizado));
     }
 
     /**
@@ -74,6 +73,6 @@ public class PortafolioController {
     @PutMapping("/{usuarioId}/reiniciar")
     public ResponseEntity<PortafolioResponse> reiniciarPortafolio(@PathVariable Long usuarioId) {
         Portafolio portafolioActualizado = portafolioService.reiniciarPortafolio(usuarioId);
-        return new ResponseEntity<>(PortafolioResponse.from(portafolioActualizado), HttpStatus.OK);
+        return ResponseEntity.ok(PortafolioResponse.from(portafolioActualizado));
     }
 }
