@@ -31,12 +31,12 @@ public class PortafolioService {
      */
     @Transactional(readOnly = true)
     public Portafolio obtenerPortafolio(Long usuarioId) {
-        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
-
         return portafolioRepository.findByUsuarioId(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        isEn ? "No portfolio found for user: " + usuarioId
-                                : "No se encontró un portafolio para el usuario: " + usuarioId
+                        obtenerMensaje(
+                                "No portfolio found for user: " + usuarioId,
+                                "No se encontró un portafolio para el usuario: " + usuarioId
+                        )
                 ));
     }
 
@@ -45,26 +45,13 @@ public class PortafolioService {
      */
     @Transactional
     public Portafolio inyectarCapital(Long usuarioId, BigDecimal monto) {
-        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
+        validarMontoPositivo(monto,
+                "The injection amount must be greater than zero.",
+                "El monto de inyección debe ser mayor a cero.");
 
-        if (monto.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException(
-                    isEn ? "The injection amount must be greater than zero."
-                            : "El monto de inyección debe ser mayor a cero."
-            );
-        }
+        Portafolio portafolio = obtenerPortafolioParaActualizacion(usuarioId);
 
-        /**
-         * Congela la fila durante la escritura
-         */
-        Portafolio portafolio = portafolioRepository.findByUsuarioIdForUpdate(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        isEn ? "No active portfolio found for user: " + usuarioId
-                                : "No se encontró un portafolio activo para el usuario: " + usuarioId
-                ));
-
-        BigDecimal nuevoBalance = portafolio.getBalanceMxn().add(monto);
-        portafolio.setBalanceMxn(nuevoBalance);
+        portafolio.setBalanceMxn(portafolio.getBalanceMxn().add(monto));
 
         return portafolioRepository.save(portafolio);
     }
@@ -74,34 +61,26 @@ public class PortafolioService {
      */
     @Transactional
     public Portafolio comprarUsdc(Long usuarioId, BigDecimal montoMxn, BigDecimal tipoCambio) {
-        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
+        validarMontoPositivo(montoMxn,
+                "The amount must be greater than zero.",
+                "El monto debe ser mayor a cero.");
 
-        if (montoMxn.compareTo(BigDecimal.ZERO) <= 0 || tipoCambio.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException(
-                    isEn ? "The amount and exchange rate must be greater than zero."
-                            : "El monto y el tipo de cambio deben ser mayores a cero."
-            );
-        }
+        validarMontoPositivo(tipoCambio,
+                "The exchange rate must be greater than zero.",
+                "El tipo de cambio debe ser mayor a cero.");
 
-        Portafolio portafolio = portafolioRepository.findByUsuarioIdForUpdate(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        isEn ? "No active portfolio found for user: " + usuarioId
-                                : "No se encontró un portafolio activo para el usuario: " + usuarioId
-                ));
+        Portafolio portafolio = obtenerPortafolioParaActualizacion(usuarioId);
 
         if (portafolio.getBalanceMxn().compareTo(montoMxn) < 0) {
             throw new IllegalStateException(
-                    isEn ? "Insufficient balance to perform the purchase."
-                            : "Saldo insuficiente para realizar la compra."
+                    obtenerMensaje("Insufficient balance to perform the purchase.", "Saldo insuficiente para realizar la compra.")
             );
         }
 
-        BigDecimal nuevoBalanceMxn = portafolio.getBalanceMxn().subtract(montoMxn);
-        portafolio.setBalanceMxn(nuevoBalanceMxn);
+        portafolio.setBalanceMxn(portafolio.getBalanceMxn().subtract(montoMxn));
 
         BigDecimal usdcComprados = montoMxn.divide(tipoCambio, 4, RoundingMode.HALF_UP);
-        BigDecimal nuevoBalanceUsdc = portafolio.getBalanceUsdc().add(usdcComprados);
-        portafolio.setBalanceUsdc(nuevoBalanceUsdc);
+        portafolio.setBalanceUsdc(portafolio.getBalanceUsdc().add(usdcComprados));
 
         return portafolioRepository.save(portafolio);
     }
@@ -111,17 +90,41 @@ public class PortafolioService {
      */
     @Transactional
     public Portafolio reiniciarPortafolio(Long usuarioId) {
-        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
-
-        Portafolio portafolio = portafolioRepository.findByUsuarioIdForUpdate(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        isEn ? "No active portfolio found for user: " + usuarioId
-                                : "No se encontró un portafolio activo para el usuario: " + usuarioId
-                ));
+        Portafolio portafolio = obtenerPortafolioParaActualizacion(usuarioId);
 
         portafolio.setBalanceMxn(BigDecimal.ZERO);
         portafolio.setBalanceUsdc(BigDecimal.ZERO);
 
         return portafolioRepository.save(portafolio);
+    }
+
+    /**
+     * Obtiene el portafolio aplicando el bloqueo pesimista en base de datos.
+     */
+    private Portafolio obtenerPortafolioParaActualizacion(Long usuarioId) {
+        return portafolioRepository.findByUsuarioIdForUpdate(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        obtenerMensaje(
+                                "No active portfolio found for user: " + usuarioId,
+                                "No se encontró un portafolio activo para el usuario: " + usuarioId
+                        )
+                ));
+    }
+
+    /**
+     * Centraliza la validacion defensiva de montos financieros.
+     */
+    private void validarMontoPositivo(BigDecimal monto, String msgEn, String msgEs) {
+        if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException(obtenerMensaje(msgEn, msgEs));
+        }
+    }
+
+    /**
+     * Determina dinamicamente el mensaje basado en el idioma de la petición HTTP.
+     */
+    private String obtenerMensaje(String msgEn, String msgEs) {
+        boolean isEn = "en".equals(LocaleContextHolder.getLocale().getLanguage());
+        return isEn ? msgEn : msgEs;
     }
 }
